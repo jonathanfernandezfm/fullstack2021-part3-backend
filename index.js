@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const cors = require('cors');
 const Person = require('./models/person');
 
-morgan.token('body', function (req, res) {
+morgan.token('body', function (req) {
 	return JSON.stringify(req.body);
 });
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms - :body '));
@@ -17,8 +17,12 @@ app.get('/', (request, response) => {
 	response.send('<h1>Hello World!</h1>');
 });
 
-app.get('/info', (request, response) => {
-	response.send(`<p>Phonebook has info for ${persons.length} people</p><p>${new Date()}</p>`);
+app.get('/info', (request, response, next) => {
+	Person.find({})
+		.then((persons) => {
+			response.send(`<p>Phonebook has info for ${persons.length} people</p><p>${new Date()}</p>`);
+		})
+		.catch((error) => next(error));
 });
 
 app.get('/api/persons', (request, response, next) => {
@@ -77,7 +81,7 @@ app.put('/api/persons/:id', (request, response, next) => {
 
 app.delete('/api/persons/:id', (request, response, next) => {
 	Person.findByIdAndRemove(request.params.id)
-		.then((result) => {
+		.then(() => {
 			response.status(204).end();
 		})
 		.catch((error) => next(error));
